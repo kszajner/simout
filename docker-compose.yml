@@ -1,0 +1,9 @@
+services:
+  simout:
+    build: .
+    container_name: simout
+    ports:
+      - "8090:8090"
+    volumes:
+      - /mnt/ssd/docker/simout/data:/app/data
+    restart: unless-stopped
