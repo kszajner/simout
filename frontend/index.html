@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FAF7F0" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1E1A14" media="(prefers-color-scheme: dark)" />
-    <title>SimOut — Simple Workout</title>
+    <meta name="theme-color" content="#14110D" />
+    <meta name="color-scheme" content="dark" />
+    <title>SimOut</title>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
@@ -17,30 +17,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
-    <header class="topbar">
+    <header class="topbar" id="topbar">
         <div class="topbar-inner">
             <button class="back-btn" id="back-btn" aria-label="Back" hidden>‹</button>
-            <a href="#/" class="wordmark">SimOut</a>
             <h1 class="view-title" id="view-title"></h1>
-        </div>
-        <div class="noren" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
         </div>
     </header>
 
     <main id="view" class="view"></main>
-
-    <nav class="bottom-nav" aria-label="Primary">
-        <a href="#/" data-nav="home"><span class="nav-icon">⌂</span><span class="nav-label">Home</span></a>
-        <a href="#/plans" data-nav="plans"><span class="nav-icon">❘❘❘</span><span class="nav-label">Plans</span></a>
-        <a href="#/progress" data-nav="progress"><span class="nav-icon">∿</span><span class="nav-label">Progress</span></a>
-        <a href="#/measurements" data-nav="measurements"><span class="nav-icon">◷</span><span class="nav-label">Measure</span></a>
-    </nav>
 
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 

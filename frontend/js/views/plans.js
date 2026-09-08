@@ -3,23 +3,22 @@ import { el, clear, toast, reportError, confirmDialog, emptyState } from '../ui.
 
 export async function renderPlans(root) {
     clear(root);
-    root.appendChild(el('div', { class: 'row', style: { alignItems: 'center', marginBottom: '16px' } }, [
-        el('h2', { class: 'grow' }, ['Plans']),
-        el('a', { href: '#/exercises', class: 'btn btn-sm' }, ['📖 Library']),
+    root.appendChild(el('div', { class: 'row', style: { alignItems: 'center', marginBottom: '16px', justifyContent: 'flex-end' } }, [
+        el('a', { href: '#/exercises', class: 'btn btn-sm btn-ghost' }, ['Ćwiczenia →']),
     ]));
 
     // Add-plan form
-    const newName = el('input', { class: 'input', placeholder: 'New plan name' });
+    const newName = el('input', { class: 'input', placeholder: 'Nazwa nowego planu' });
     const addBtn = el('button', { class: 'btn btn-primary', onClick: async () => {
         const name = newName.value.trim();
         if (!name) return;
         try {
             await api.createPlan(name);
             newName.value = '';
-            toast('Plan created', 'success');
+            toast('Plan utworzony', 'success');
             renderPlans(root);
         } catch (err) { reportError(err); }
-    } }, ['Add']);
+    } }, ['Dodaj']);
     root.appendChild(el('div', { class: 'card' }, [
         el('div', { class: 'row' }, [el('div', { class: 'grow' }, [newName]), addBtn]),
     ]));
@@ -28,7 +27,7 @@ export async function renderPlans(root) {
     try { plans = await api.listPlans(); } catch (err) { reportError(err); return; }
 
     if (!plans.length) {
-        root.appendChild(emptyState({ title: 'No plans yet', hint: 'Create one above to begin shaping your week.' }));
+        root.appendChild(emptyState({ title: 'Brak planów', hint: 'Utwórz plan powyżej, żeby zacząć układać swój tydzień.' }));
         return;
     }
 
@@ -46,7 +45,7 @@ async function renderPlanNode(plan, rootForRefresh) {
         onChange: async (e) => {
             const v = e.target.value.trim();
             if (!v || v === plan.name) { e.target.value = plan.name; return; }
-            try { await api.renamePlan(plan.id, v); plan.name = v; toast('Renamed', 'success'); }
+            try { await api.renamePlan(plan.id, v); plan.name = v; toast('Zmieniono nazwę', 'success'); }
             catch (err) { reportError(err); e.target.value = plan.name; }
         },
     });
@@ -56,11 +55,11 @@ async function renderPlanNode(plan, rootForRefresh) {
         el('button', {
             class: 'btn-danger btn btn-sm',
             onClick: async () => {
-                if (!await confirmDialog(`Delete plan "${plan.name}" and all its days?`)) return;
-                try { await api.deletePlan(plan.id); toast('Plan deleted', 'success'); renderPlans(rootForRefresh); }
+                if (!await confirmDialog(`Usunąć plan „${plan.name}” razem ze wszystkimi dniami?`)) return;
+                try { await api.deletePlan(plan.id); toast('Plan usunięty', 'success'); renderPlans(rootForRefresh); }
                 catch (err) { reportError(err); }
             },
-        }, ['Delete']),
+        }, ['Usuń']),
     ]));
 
     // Days
@@ -71,7 +70,7 @@ async function renderPlanNode(plan, rootForRefresh) {
     for (const day of days) daysWrap.appendChild(await renderDayNode(plan, day, rootForRefresh));
 
     // Add day
-    const newDay = el('input', { class: 'input', placeholder: 'New day (e.g. Push A)' });
+    const newDay = el('input', { class: 'input', placeholder: 'Nowy dzień (np. Klata A)' });
     daysWrap.appendChild(el('div', { class: 'row', style: { marginTop: '8px' } }, [
         el('div', { class: 'grow' }, [newDay]),
         el('button', { class: 'btn btn-sm', onClick: async () => {
@@ -79,10 +78,10 @@ async function renderPlanNode(plan, rootForRefresh) {
             if (!n) return;
             try {
                 await api.createDay(plan.id, n, days.length);
-                toast('Day added', 'success');
+                toast('Dzień dodany', 'success');
                 renderPlans(rootForRefresh);
             } catch (err) { reportError(err); }
-        } }, ['+ day']),
+        } }, ['+ dzień']),
     ]));
 
     return wrap;
@@ -96,7 +95,7 @@ async function renderDayNode(plan, day, rootForRefresh) {
         onChange: async (e) => {
             const v = e.target.value.trim();
             if (!v || v === day.name) { e.target.value = day.name; return; }
-            try { await api.updateDay(day.id, v, day.order_index); day.name = v; toast('Renamed', 'success'); }
+            try { await api.updateDay(day.id, v, day.order_index); day.name = v; toast('Zmieniono nazwę', 'success'); }
             catch (err) { reportError(err); e.target.value = day.name; }
         },
     });
@@ -106,8 +105,8 @@ async function renderDayNode(plan, day, rootForRefresh) {
         el('button', {
             class: 'btn-danger btn btn-sm',
             onClick: async () => {
-                if (!await confirmDialog(`Delete day "${day.name}"?`)) return;
-                try { await api.deleteDay(day.id); toast('Day deleted', 'success'); renderPlans(rootForRefresh); }
+                if (!await confirmDialog(`Usunąć dzień „${day.name}”?`)) return;
+                try { await api.deleteDay(day.id); toast('Dzień usunięty', 'success'); renderPlans(rootForRefresh); }
                 catch (err) { reportError(err); }
             },
         }, ['×']),
@@ -125,9 +124,9 @@ async function renderDayNode(plan, day, rootForRefresh) {
 
     // Add exercise to day — supports inline creation
     const select = el('select', { class: 'select' }, [
-        el('option', { value: '' }, ['+ add exercise…']),
-        el('option', { value: '__new__' }, ['✦ Create new exercise…']),
-        library.length ? el('option', { value: '', disabled: true }, ['── library ──']) : null,
+        el('option', { value: '' }, ['+ dodaj ćwiczenie…']),
+        el('option', { value: '__new__' }, ['✦ Utwórz nowe ćwiczenie…']),
+        library.length ? el('option', { value: '', disabled: true }, ['── biblioteka ──']) : null,
         ...library.map(e => el('option', { value: String(e.id) }, [e.name])),
     ]);
     select.addEventListener('change', async () => {
@@ -135,12 +134,12 @@ async function renderDayNode(plan, day, rootForRefresh) {
         if (!v) return;
         if (v === '__new__') {
             select.value = '';
-            const name = window.prompt('New exercise name (e.g. Bench Press)');
+            const name = window.prompt('Nazwa nowego ćwiczenia (np. Wyciskanie sztangi)');
             if (!name || !name.trim()) return;
             try {
                 const created = await api.createExercise(name.trim());
                 await api.addDayExercise(day.id, { exercise_id: created.id, sets: 3, reps: 10, order_index: exercises.length });
-                toast('Added', 'success');
+                toast('Dodano', 'success');
                 renderPlans(rootForRefresh);
             } catch (err) { reportError(err); }
             return;
@@ -149,7 +148,7 @@ async function renderDayNode(plan, day, rootForRefresh) {
         if (!exerciseId) return;
         try {
             await api.addDayExercise(day.id, { exercise_id: exerciseId, sets: 3, reps: 10, order_index: exercises.length });
-            toast('Added', 'success');
+            toast('Dodano', 'success');
             renderPlans(rootForRefresh);
         } catch (err) { reportError(err); select.value = ''; }
     });
@@ -176,9 +175,9 @@ function renderTdeRow(tde, day, rootForRefresh) {
         setsInput, el('span', { class: 'hint' }, ['×']), repsInput,
         el('button', {
             class: 'del-set-btn',
-            'aria-label': 'Remove',
+            'aria-label': 'Usuń',
             onClick: async () => {
-                try { await api.removeDayExercise(tde.id); toast('Removed', 'success'); renderPlans(rootForRefresh); }
+                try { await api.removeDayExercise(tde.id); toast('Usunięto', 'success'); renderPlans(rootForRefresh); }
                 catch (err) { reportError(err); }
             },
         }, ['×']),

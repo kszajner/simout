@@ -8,12 +8,10 @@ export async function renderProgress(root) {
     for (const c of charts.values()) c.destroy();
     charts.clear();
 
-    root.appendChild(el('h2', { style: { marginBottom: '16px' } }, ['Progress']));
-
     let exercises = [];
     try { exercises = await api.listExercises(); } catch (err) { reportError(err); return; }
     if (!exercises.length) {
-        root.appendChild(emptyState({ title: 'Nothing to chart', hint: 'Add an exercise and log a set with a weight to see it here.' }));
+        root.appendChild(emptyState({ title: 'Nic do pokazania', hint: 'Dodaj ćwiczenie i zapisz serię z obciążeniem, żeby zobaczyć je tutaj.' }));
         return;
     }
 
@@ -28,19 +26,19 @@ export async function renderProgress(root) {
 
     if (!withCharts.length && !withSetsButNoChart.length) {
         root.appendChild(emptyState({
-            title: 'Quiet waters',
-            hint: 'Log a set with a weight during a workout to start seeing trends here.',
+            title: 'Cicha przystań',
+            hint: 'Zapisz serię z obciążeniem podczas treningu, żeby zaczęły się tu pojawiać trendy.',
         }));
         return;
     }
 
     const styles = getComputedStyle(document.documentElement);
-    const accent = styles.getPropertyValue('--accent').trim() || '#C8A96E';
-    const textCol = styles.getPropertyValue('--text-secondary').trim() || '#7A6A52';
-    const grid = styles.getPropertyValue('--border').trim() || '#E4DBC8';
+    const accent = styles.getPropertyValue('--accent-progress').trim() || '#8C7096';
+    const textCol = styles.getPropertyValue('--text-secondary').trim() || '#9C9184';
+    const grid = styles.getPropertyValue('--border').trim() || 'rgba(237,230,220,.09)';
 
     if (withCharts.length) {
-        root.appendChild(el('div', { class: 'section-title' }, ['Trends']));
+        root.appendChild(el('div', { class: 'section-title' }, ['Trendy']));
     }
     for (const { exercise, data } of withCharts) {
         const wrap = el('div', { class: 'chart-wrap' });
@@ -58,7 +56,7 @@ export async function renderProgress(root) {
 
         if (data.pr) {
             wrap.appendChild(el('div', { class: 'pr-meta', style: { marginTop: '6px', fontSize: '12px', color: textCol } }, [
-                `PR set on ${fmtDate(data.pr.date)}`,
+                `Rekord ustanowiony ${fmtDate(data.pr.date)}`,
             ]));
         }
 
@@ -73,10 +71,14 @@ export async function renderProgress(root) {
                     label: 'Max kg',
                     data: data.points.map(p => p.max_weight),
                     borderColor: accent,
-                    backgroundColor: accent + '22',
+                    backgroundColor: accent + '1A',
+                    pointRadius: data.points.length > 45 ? 0 : 3,
+                    pointHoverRadius: 4,
+                    pointHitRadius: 12,
                     pointBackgroundColor: accent,
-                    pointRadius: 4,
-                    borderWidth: 2.5,
+                    borderWidth: 2,
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
                     tension: 0.3,
                     fill: true,
                 }],
@@ -84,9 +86,22 @@ export async function renderProgress(root) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: styles.getPropertyValue('--bg-elevated').trim() || '#241F19',
+                        titleColor: textCol,
+                        bodyColor: styles.getPropertyValue('--text-primary').trim() || '#EDE6DC',
+                        borderColor: grid,
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false,
+                    },
+                },
                 scales: {
-                    x: { ticks: { color: textCol }, grid: { color: grid } },
+                    x: { ticks: { color: textCol, maxTicksLimit: 6 }, grid: { display: false } },
                     y: { ticks: { color: textCol }, grid: { color: grid }, beginAtZero: false },
                 },
             },
@@ -95,7 +110,7 @@ export async function renderProgress(root) {
     }
 
     if (withSetsButNoChart.length) {
-        root.appendChild(el('div', { class: 'section-title' }, ['Awaiting weights']));
+        root.appendChild(el('div', { class: 'section-title' }, ['Bez obciążeń']));
         const list = el('ul', { class: 'list' });
         for (const { exercise, data } of withSetsButNoChart) {
             const total = data.logged_sets || 0;
@@ -103,7 +118,7 @@ export async function renderProgress(root) {
                 el('div', { class: 'grow' }, [
                     el('div', {}, [exercise.name]),
                     el('div', { class: 'meta' }, [
-                        `${total} set${total === 1 ? '' : 's'} logged · no weights yet`,
+                        `${total} seri${total === 1 ? 'a' : 'e'} zapisane · brak obciążeń`,
                     ]),
                 ]),
             ]));

@@ -83,4 +83,26 @@ export const api = {
     updateMeasurement: (id, payload) => put(`/api/measurements/${id}`, payload),
     deleteMeasurement: (id) => del(`/api/measurements/${id}`),
     measurementsChart: () => get('/api/measurements/chart'),
+
+    // apple health
+    healthStatus: () => get('/api/health/status'),
+    healthActivityChart: (days = 90) => get(`/api/health/activity/chart?days=${days}`),
+    healthHeartRateChart: (days = 90) => get(`/api/health/heart-rate/chart?days=${days}`),
+    healthSleepChart: (nights = 30) => get(`/api/health/sleep/chart?nights=${nights}`),
+    healthBodyCompositionChart: () => get('/api/health/body-composition/chart'),
+    uploadHealthImport: async (file) => {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch('/api/health/import', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) throw new ApiError(data.detail || 'Upload failed', res.status, data);
+        return data;
+    },
+
+    // blood
+    listBloodPanels: () => get('/api/blood/panels'),
+    createBloodPanel: (payload) => post('/api/blood/panels', payload),
+    updateBloodPanel: (id, payload) => put(`/api/blood/panels/${id}`, payload),
+    deleteBloodPanel: (id) => del(`/api/blood/panels/${id}`),
+    bloodMarkersChart: () => get('/api/blood/markers/chart'),
 };

@@ -4,16 +4,16 @@ import { navigate } from '../router.js';
 
 export async function renderWorkout(root, sessionId) {
     clear(root);
-    root.appendChild(el('div', { class: 'center muted', html: 'loading…' }));
+    root.appendChild(el('div', { class: 'center muted', html: 'ładowanie…' }));
 
     let detail;
     try {
         detail = await api.sessionDetail(sessionId);
     } catch (err) {
         clear(root);
-        root.appendChild(emptyState({ title: 'Session not found', hint: 'It may have been discarded.' }));
+        root.appendChild(emptyState({ title: 'Nie znaleziono sesji', hint: 'Mogła zostać odrzucona.' }));
         root.appendChild(el('div', { class: 'center', style: { marginTop: '12px' } }, [
-            el('button', { class: 'btn', onClick: () => navigate('/') }, ['Home']),
+            el('button', { class: 'btn', onClick: () => navigate('/') }, ['Strona główna']),
         ]));
         return;
     }
@@ -26,7 +26,7 @@ export async function renderWorkout(root, sessionId) {
     const header = el('div', { class: 'card' }, [
         el('div', { class: 'row' }, [
             el('div', { class: 'grow' }, [
-                el('h2', {}, [session.training_day_name || 'Workout']),
+                el('h2', {}, [session.training_day_name || 'Trening']),
                 session.plan_name ? el('div', { class: 'muted', style: { fontSize: '14px' } }, [session.plan_name]) : null,
             ]),
             el('div', { class: 'hint', style: { textAlign: 'right' } }, [session.date]),
@@ -46,7 +46,7 @@ export async function renderWorkout(root, sessionId) {
     }
 
     if (!exerciseOrder.length) {
-        root.appendChild(emptyState({ title: 'Empty plan', hint: 'This day has no exercises. Add some on the Plans tab, then start again.' }));
+        root.appendChild(emptyState({ title: 'Pusty plan', hint: 'Ten dzień nie ma ćwiczeń. Dodaj je w zakładce Plany i zacznij ponownie.' }));
     }
 
     // Group existing sets by exercise
@@ -79,25 +79,25 @@ export async function renderWorkout(root, sessionId) {
                 el('button', {
                     class: 'btn btn-ghost',
                     onClick: async () => {
-                        if (!await confirmDialog('Discard this in-progress workout? All logged sets will be lost.')) return;
+                        if (!await confirmDialog('Odrzucić rozpoczęty trening? Wszystkie zapisane serie zostaną utracone.')) return;
                         try {
                             await api.deleteSession(sessionId);
-                            toast('Session discarded', 'success');
+                            toast('Sesja odrzucona', 'success');
                             navigate('/');
                         } catch (err) { reportError(err); }
                     },
-                }, ['Discard']),
+                }, ['Odrzuć']),
                 el('div', { class: 'spacer' }),
                 el('button', {
                     class: 'btn btn-primary',
                     onClick: async () => {
                         try {
                             await api.finishSession(sessionId);
-                            toast('Workout complete', 'success');
+                            toast('Trening zakończony', 'success');
                             navigate('/');
                         } catch (err) { reportError(err); }
                     },
-                }, ['Finish workout']),
+                }, ['Zakończ trening']),
             ]),
         ]);
         root.appendChild(finishBar);
@@ -116,16 +116,16 @@ async function renderExerciseBlock({ sessionId, exerciseId, exerciseName, templa
     block.appendChild(hint);
     api.lastSession(exerciseId, sessionId).then(last => {
         if (!last || !last.sets || !last.sets.length) {
-            hint.textContent = 'No previous record.';
+            hint.textContent = 'Brak wcześniejszego zapisu.';
             return;
         }
-        hint.textContent = `Last (${last.date}): ${summarizeSets(last.sets)}`;
+        hint.textContent = `Ostatnio (${last.date}): ${summarizeSets(last.sets)}`;
     }).catch(() => { hint.textContent = ''; });
 
     // Column header row — makes reps/kg unmistakable
     block.appendChild(el('div', { class: 'set-row set-head', 'aria-hidden': 'true' }, [
         el('div', { class: 'set-num' }, ['#']),
-        el('div', { class: 'set-head-label' }, ['reps']),
+        el('div', { class: 'set-head-label' }, ['powt.']),
         el('div', { class: 'set-head-label' }, ['kg']),
         el('div', {}, []),
         el('div', {}, []),
@@ -162,7 +162,7 @@ async function renderExerciseBlock({ sessionId, exerciseId, exerciseName, templa
                 const next = nextFreeSetNumber(state);
                 addSetRow(setsContainer, state, { sessionId, exerciseId, isFinished, persisted: null, setNumber: next, templateReps: template?.reps });
             },
-        }, ['+ add set']);
+        }, ['+ dodaj serię']);
         block.appendChild(addBtn);
     }
 
@@ -180,7 +180,7 @@ function addSetRow(container, state, { sessionId, exerciseId, isFinished, persis
         type: 'number',
         inputmode: 'numeric',
         class: 'set-input',
-        placeholder: templateReps != null ? String(templateReps) : 'reps',
+        placeholder: templateReps != null ? String(templateReps) : 'powt.',
         value: persisted?.reps != null ? persisted.reps : '',
         disabled: isFinished,
     });
@@ -196,17 +196,17 @@ function addSetRow(container, state, { sessionId, exerciseId, isFinished, persis
 
     const checkBtn = el('button', {
         class: 'check-btn' + (persisted?.completed ? ' checked' : ''),
-        'aria-label': 'Mark set complete',
+        'aria-label': 'Oznacz serię jako wykonaną',
         type: 'button',
         disabled: isFinished,
     }, ['✓']);
 
     const delBtn = el('button', {
         class: 'del-set-btn',
-        'aria-label': 'Remove set',
+        'aria-label': 'Usuń serię',
         type: 'button',
         disabled: isFinished,
-        title: 'Remove set',
+        title: 'Usuń serię',
     }, ['×']);
 
     const row = el('div', {
@@ -285,7 +285,7 @@ function addSetRow(container, state, { sessionId, exerciseId, isFinished, persis
     delBtn.addEventListener('click', async () => {
         if (isFinished) return;
         if (ref.persisted) {
-            if (!await confirmDialog('Remove this set?')) return;
+            if (!await confirmDialog('Usunąć tę serię?')) return;
             try { await api.deleteSet(ref.persisted.id); } catch (err) { reportError(err); return; }
         }
         state.rows.delete(setNumber);

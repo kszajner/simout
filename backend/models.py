@@ -112,3 +112,18 @@ class MeasurementIn(BaseModel):
 
 class Measurement(MeasurementIn):
     id: int
+
+
+class BloodMarkerIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    value: float
+    unit: Optional[str] = None
+    ref_low: Optional[float] = None
+    ref_high: Optional[float] = None
+
+
+class BloodPanelIn(BaseModel):
+    date: date
+    lab_name: Optional[str] = None
+    note: Optional[str] = None
+    markers: list[BloodMarkerIn] = []

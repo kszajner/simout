@@ -68,12 +68,65 @@ CREATE TABLE IF NOT EXISTS body_measurements (
     thigh_right REAL
 );
 
+CREATE TABLE IF NOT EXISTS health_daily_activity (
+    date TEXT PRIMARY KEY,
+    steps INTEGER,
+    active_energy_kcal REAL,
+    basal_energy_kcal REAL,
+    distance_km REAL
+);
+
+CREATE TABLE IF NOT EXISTS health_heart_rate_daily (
+    date TEXT PRIMARY KEY,
+    min_bpm REAL,
+    avg_bpm REAL,
+    max_bpm REAL,
+    resting_bpm REAL
+);
+
+CREATE TABLE IF NOT EXISTS health_sleep (
+    night_date TEXT PRIMARY KEY,
+    asleep_hours REAL,
+    in_bed_hours REAL,
+    source TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS health_body_composition (
+    date TEXT PRIMARY KEY,
+    weight_kg REAL,
+    bmi REAL,
+    body_fat_pct REAL,
+    lean_body_mass_kg REAL
+);
+
+CREATE TABLE IF NOT EXISTS blood_panels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL,
+    lab_name TEXT,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS blood_markers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    panel_id INTEGER NOT NULL REFERENCES blood_panels(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    value REAL NOT NULL,
+    unit TEXT,
+    ref_low REAL,
+    ref_high REAL,
+    order_index INTEGER DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_session_sets_session ON session_sets(session_id);
 CREATE INDEX IF NOT EXISTS idx_session_sets_exercise ON session_sets(exercise_id);
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(date);
 CREATE INDEX IF NOT EXISTS idx_training_days_plan ON training_days(plan_id);
 CREATE INDEX IF NOT EXISTS idx_tde_day ON training_day_exercises(training_day_id);
 CREATE INDEX IF NOT EXISTS idx_measurements_date ON body_measurements(date);
+CREATE INDEX IF NOT EXISTS idx_blood_markers_panel ON blood_markers(panel_id);
+CREATE INDEX IF NOT EXISTS idx_blood_markers_name ON blood_markers(name);
+CREATE INDEX IF NOT EXISTS idx_blood_panels_date ON blood_panels(date);
 """
 
 

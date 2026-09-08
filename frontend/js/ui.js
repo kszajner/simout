@@ -47,6 +47,8 @@ export function reportError(err) {
 export function setViewTitle(text) {
     const t = document.getElementById('view-title');
     if (t) t.textContent = text || '';
+    const bar = document.getElementById('topbar');
+    if (bar) bar.classList.toggle('has-title', !!text);
 }
 
 export function showBackButton(onClick) {

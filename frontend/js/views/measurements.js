@@ -2,29 +2,46 @@ import { api } from '../api.js';
 import { el, clear, toast, reportError, fmtDate, todayIso, confirmDialog, trimFloat, emptyState } from '../ui.js';
 
 const FIELDS = [
-    { key: 'weight', label: 'Weight (kg)' },
-    { key: 'chest', label: 'Chest (cm)' },
-    { key: 'waist', label: 'Waist (cm)' },
-    { key: 'hips', label: 'Hips (cm)' },
-    { key: 'bicep_left', label: 'Bicep L (cm)' },
-    { key: 'bicep_right', label: 'Bicep R (cm)' },
-    { key: 'thigh_left', label: 'Thigh L (cm)' },
-    { key: 'thigh_right', label: 'Thigh R (cm)' },
+    { key: 'weight', label: 'Waga (kg)' },
+    { key: 'chest', label: 'Klatka (cm)' },
+    { key: 'waist', label: 'Talia (cm)' },
+    { key: 'hips', label: 'Biodra (cm)' },
+    { key: 'bicep_left', label: 'Biceps L (cm)' },
+    { key: 'bicep_right', label: 'Biceps P (cm)' },
+    { key: 'thigh_left', label: 'Udo L (cm)' },
+    { key: 'thigh_right', label: 'Udo P (cm)' },
 ];
 
 const charts = new Map();
+
+function chartOptions(textCol, grid, elevated, textPrimary) {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: elevated, titleColor: textCol, bodyColor: textPrimary,
+                borderColor: grid, borderWidth: 1, padding: 10, cornerRadius: 8, displayColors: false,
+            },
+        },
+        scales: {
+            x: { ticks: { color: textCol, maxTicksLimit: 6 }, grid: { display: false } },
+            y: { ticks: { color: textCol }, grid: { color: grid }, beginAtZero: false },
+        },
+    };
+}
 
 export async function renderMeasurements(root) {
     clear(root);
     for (const c of charts.values()) c.destroy();
     charts.clear();
 
-    root.appendChild(el('h2', { style: { marginBottom: '16px' } }, ['Body measurements']));
-
     // Add form
     const form = el('div', { class: 'card' });
     const dateInput = el('input', { type: 'date', class: 'input', value: todayIso() });
-    form.appendChild(el('div', { class: 'field' }, [el('label', {}, ['Date']), dateInput]));
+    form.appendChild(el('div', { class: 'field' }, [el('label', {}, ['Data']), dateInput]));
 
     const fieldInputs = {};
     const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' } });
@@ -44,25 +61,27 @@ export async function renderMeasurements(root) {
                 const v = fieldInputs[f.key].value.trim();
                 if (v !== '') { payload[f.key] = parseFloat(v); any = true; }
             }
-            if (!any) { toast('Enter at least one value', 'error'); return; }
+            if (!any) { toast('Wpisz przynajmniej jedną wartość', 'error'); return; }
             try {
                 await api.createMeasurement(payload);
-                toast('Saved', 'success');
+                toast('Zapisano', 'success');
                 renderMeasurements(root);
             } catch (err) { reportError(err); }
         },
-    }, ['Save']));
+    }, ['Zapisz']));
     root.appendChild(form);
 
     // Charts
     let chartData;
     try { chartData = await api.measurementsChart(); } catch (err) { reportError(err); return; }
     const styles = getComputedStyle(document.documentElement);
-    const accent = styles.getPropertyValue('--accent').trim() || '#C8A96E';
-    const text = styles.getPropertyValue('--text-secondary').trim() || '#7A6A52';
-    const grid2 = styles.getPropertyValue('--border').trim() || '#E4DBC8';
+    const accent = styles.getPropertyValue('--accent-measurements').trim() || '#6D84A1';
+    const text = styles.getPropertyValue('--text-secondary').trim() || '#9C9184';
+    const grid2 = styles.getPropertyValue('--border').trim() || 'rgba(237,230,220,.09)';
+    const elevated = styles.getPropertyValue('--bg-elevated').trim() || '#241F19';
+    const textPrimary = styles.getPropertyValue('--text-primary').trim() || '#EDE6DC';
 
-    root.appendChild(el('div', { class: 'section-title' }, ['Trends']));
+    root.appendChild(el('div', { class: 'section-title' }, ['Trendy']));
     let anyChart = false;
     for (const f of FIELDS) {
         const series = (chartData.series || {})[f.key] || [];
@@ -82,34 +101,79 @@ export async function renderMeasurements(root) {
                     label: f.label,
                     data: series.map(p => p.value),
                     borderColor: accent,
-                    backgroundColor: accent + '22',
+                    backgroundColor: accent + '1A',
+                    pointRadius: series.length > 45 ? 0 : 3,
+                    pointHoverRadius: 4,
+                    pointHitRadius: 12,
                     pointBackgroundColor: accent,
-                    pointRadius: 3,
+                    borderWidth: 2,
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
                     tension: 0.3,
                     fill: true,
                 }],
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: text }, grid: { color: grid2 } },
-                    y: { ticks: { color: text }, grid: { color: grid2 }, beginAtZero: false },
-                },
-            },
+            options: chartOptions(text, grid2, elevated, textPrimary),
         });
         charts.set(f.key, chart);
     }
     if (!anyChart) {
-        root.appendChild(emptyState({ hint: 'Save a measurement above to start tracking trends.' }));
+        root.appendChild(emptyState({ hint: 'Zapisz pomiar powyżej, żeby zacząć śledzić trendy.' }));
+    }
+
+    // Apple Health body composition (separate source, own chart-key namespace)
+    const HEALTH_FIELDS = [
+        { key: 'weight_kg', label: 'Waga (kg)' },
+        { key: 'bmi', label: 'BMI' },
+        { key: 'body_fat_pct', label: 'Tkanka tłuszczowa (%)' },
+        { key: 'lean_body_mass_kg', label: 'Masa mięśniowa (kg)' },
+    ];
+    let bodyComp = null;
+    try { bodyComp = await api.healthBodyCompositionChart(); } catch { /* no health data yet */ }
+    if (bodyComp) {
+        const healthColor = styles.getPropertyValue('--accent-health').trim();
+        let anyHealthChart = false;
+        for (const f of HEALTH_FIELDS) {
+            const series = (bodyComp.series || {})[f.key] || [];
+            if (!series.length) continue;
+            if (!anyHealthChart) root.appendChild(el('div', { class: 'section-title' }, ['Skład ciała (Apple Health)']));
+            anyHealthChart = true;
+            const wrap = el('div', { class: 'chart-wrap' }, [
+                el('h3', {}, [f.label]),
+                el('div', { class: 'chart-canvas-wrap' }, [el('canvas', {})]),
+            ]);
+            root.appendChild(wrap);
+            const chart = new window.Chart(wrap.querySelector('canvas'), {
+                type: 'line',
+                data: {
+                    labels: series.map(p => p.date),
+                    datasets: [{
+                        label: f.label,
+                        data: series.map(p => p.value),
+                        borderColor: healthColor,
+                        backgroundColor: healthColor + '1A',
+                        pointRadius: series.length > 45 ? 0 : 3,
+                        pointHoverRadius: 4,
+                        pointHitRadius: 12,
+                        pointBackgroundColor: healthColor,
+                        borderWidth: 2,
+                        borderCapStyle: 'round',
+                        borderJoinStyle: 'round',
+                        tension: 0.3,
+                        fill: true,
+                    }],
+                },
+                options: chartOptions(text, grid2, elevated, textPrimary),
+            });
+            charts.set('bc_' + f.key, chart);
+        }
     }
 
     // List of past entries
     let rows;
     try { rows = await api.listMeasurements(); } catch (err) { reportError(err); return; }
     if (!rows.length) return;
-    root.appendChild(el('div', { class: 'section-title' }, ['Entries']));
+    root.appendChild(el('div', { class: 'section-title' }, ['Wpisy']));
     const list = el('ul', { class: 'list' });
     for (const r of rows) list.appendChild(measurementRow(r, root));
     root.appendChild(list);
@@ -128,31 +192,28 @@ function measurementRow(r, rootForRefresh) {
         el('button', {
             class: 'btn btn-ghost btn-sm',
             onClick: () => openEdit(r, rootForRefresh),
-        }, ['Edit']),
+        }, ['Edytuj']),
         el('button', {
             class: 'btn-danger btn btn-sm',
             onClick: async () => {
-                if (!await confirmDialog('Delete this measurement?')) return;
-                try { await api.deleteMeasurement(r.id); toast('Deleted', 'success'); renderMeasurements(rootForRefresh); }
+                if (!await confirmDialog('Usunąć ten pomiar?')) return;
+                try { await api.deleteMeasurement(r.id); toast('Usunięto', 'success'); renderMeasurements(rootForRefresh); }
                 catch (err) { reportError(err); }
             },
-        }, ['Delete']),
+        }, ['Usuń']),
     ]);
     return item;
 }
 
 function openEdit(r, rootForRefresh) {
     const overlay = el('div', {
-        style: {
-            position: 'fixed', inset: '0', background: 'rgba(44,36,22,0.5)', zIndex: 200,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
-        },
+        class: 'modal-overlay',
         onClick: (e) => { if (e.target === overlay) overlay.remove(); },
     });
-    const card = el('div', { class: 'card', style: { maxWidth: '480px', width: '100%', maxHeight: '90vh', overflow: 'auto' } });
-    card.appendChild(el('h3', { style: { marginBottom: '12px' } }, ['Edit measurement']));
+    const card = el('div', { class: 'card' });
+    card.appendChild(el('h3', { style: { marginBottom: '12px' } }, ['Edytuj pomiar']));
     const dateInput = el('input', { type: 'date', class: 'input', value: r.date });
-    card.appendChild(el('div', { class: 'field' }, [el('label', {}, ['Date']), dateInput]));
+    card.appendChild(el('div', { class: 'field' }, [el('label', {}, ['Data']), dateInput]));
     const inputs = {};
     const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' } });
     for (const f of FIELDS) {
@@ -162,16 +223,16 @@ function openEdit(r, rootForRefresh) {
     }
     card.appendChild(grid);
     card.appendChild(el('div', { class: 'row', style: { marginTop: '16px' } }, [
-        el('button', { class: 'btn btn-ghost grow', onClick: () => overlay.remove() }, ['Cancel']),
+        el('button', { class: 'btn btn-ghost grow', onClick: () => overlay.remove() }, ['Anuluj']),
         el('button', { class: 'btn btn-primary grow', onClick: async () => {
             const payload = { date: dateInput.value || r.date };
             for (const f of FIELDS) {
                 const v = inputs[f.key].value.trim();
                 payload[f.key] = v === '' ? null : parseFloat(v);
             }
-            try { await api.updateMeasurement(r.id, payload); toast('Saved', 'success'); overlay.remove(); renderMeasurements(rootForRefresh); }
+            try { await api.updateMeasurement(r.id, payload); toast('Zapisano', 'success'); overlay.remove(); renderMeasurements(rootForRefresh); }
             catch (err) { reportError(err); }
-        } }, ['Save']),
+        } }, ['Zapisz']),
     ]));
     overlay.appendChild(card);
     document.body.appendChild(overlay);

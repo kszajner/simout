@@ -1,23 +1,34 @@
 /* ============================================================
-   SimOut — Simple Workout
-   Vanilla palette, mobile-first, with a quiet Japanese
-   seaside-village vibe: soft paper, hairline borders, slow motion.
+   SimOut — dark-only, tile-hub interface.
+   One accent color per section, reused on that section's tiles
+   and charts, so color always signals where data came from.
    ============================================================ */
 
 :root {
-    --bg-primary:    #FAF7F0;
-    --bg-secondary:  #F2EDE0;
-    --bg-card:       #FFFFFF;
-    --accent:        #C8A96E;
-    --accent-hover:  #B8965A;
-    --accent-light:  #F0E6CE;
-    --text-primary:  #2C2416;
-    --text-secondary:#7A6A52;
-    --text-hint:     #B0A090;
-    --border:        #E4DBC8;
-    --success:       #6B9E6B;
-    --danger:        #C0614A;
-    --shadow:        rgba(44, 36, 22, 0.08);
+    --bg-primary:   #14110D;
+    --bg-secondary: #1A1610;
+    --bg-card:      #1D1914;
+    --bg-elevated:  #241F19;
+    --accent:       #B99A5B;
+    --accent-hover: #C7AC72;
+    --accent-light: #2A2318;
+    --text-primary:   #EDE6DC;
+    --text-secondary: #9C9184;
+    --text-hint:      #5C5346;
+    --border:   rgba(237, 230, 220, 0.09);
+    --success:  #7DAA7A;
+    --danger:   #C0614A;
+    --shadow:   rgba(0, 0, 0, 0.4);
+
+    /* One accent per section — used for its tile and its charts. */
+    --accent-workout:      #C17A56;
+    --accent-exercises:    #B99A5B;
+    --accent-plans:        #5F8B86;
+    --accent-history:      #8C8172;
+    --accent-progress:     #8C7096;
+    --accent-measurements: #6D84A1;
+    --accent-health:       #7E9574;
+    --accent-blood:        #A65D66;
 
     --radius-sm: 6px;
     --radius:    10px;
@@ -33,27 +44,8 @@
     --space-7: 48px;
 
     --topbar-h: 56px;
-    --bottomnav-h: 64px;
 
     --motion: 250ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-primary:    #1E1A14;
-        --bg-secondary:  #2A2418;
-        --bg-card:       #2E2820;
-        --accent:        #C8A96E;
-        --accent-hover:  #D4B87E;
-        --accent-light:  #3A3020;
-        --text-primary:  #F0E8D8;
-        --text-secondary:#A89878;
-        --text-hint:     #6A5C48;
-        --border:        #3A3428;
-        --success:       #5A8E5A;
-        --danger:        #C0614A;
-        --shadow:        rgba(0, 0, 0, 0.3);
-    }
 }
 
 * { box-sizing: border-box; }
@@ -69,39 +61,6 @@ html, body {
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
     overscroll-behavior-y: none;
-}
-
-/* Subtle paper-grain background, like washi */
-/* Seigaiha (青海波) — overlapping wave scales, the classic seaside-village pattern.
-   Drawn in CSS as faint paper texture. */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image:
-        radial-gradient(circle at 50% 100%, var(--border) 18%, transparent 19%),
-        radial-gradient(circle at 0% 100%, var(--border) 18%, transparent 19%),
-        radial-gradient(circle at 100% 100%, var(--border) 18%, transparent 19%);
-    background-size: 40px 20px;
-    background-position: 0 0;
-    opacity: 0.18;
-}
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background-image:
-        radial-gradient(ellipse at 15% 8%, var(--accent-light) 0, transparent 45%),
-        radial-gradient(ellipse at 90% 92%, var(--bg-secondary) 0, transparent 50%);
-    opacity: 0.55;
-}
-@media (prefers-color-scheme: dark) {
-    body::before { opacity: 0.08; }
-    body::after { opacity: 0.7; }
 }
 
 a { color: inherit; text-decoration: none; }
@@ -128,7 +87,10 @@ input, select, textarea {
     top: 0;
     z-index: 30;
     background: var(--bg-primary);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--motion);
 }
+.topbar.has-title { border-color: var(--border); }
 .topbar-inner {
     height: var(--topbar-h);
     display: flex;
@@ -138,47 +100,14 @@ input, select, textarea {
     max-width: 720px;
     margin: 0 auto;
 }
-.wordmark {
-    font-family: 'DM Serif Display', serif;
-    font-size: 24px;
-    letter-spacing: 0.01em;
-    color: var(--text-primary);
-    position: relative;
-    display: inline-block;
-}
-.wordmark::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 28%;
-    bottom: 2px;
-    height: 2px;
-    background: var(--accent);
-    border-radius: 2px;
-    opacity: 0.85;
-    transform-origin: left;
-    animation: inkStroke 700ms cubic-bezier(0.65, 0, 0.35, 1) 200ms both;
-}
-@keyframes inkStroke {
-    from { transform: scaleX(0); opacity: 0; }
-    to   { transform: scaleX(1); opacity: 0.85; }
-}
 .view-title {
     margin: 0;
     font-family: 'DM Serif Display', serif;
     font-weight: 400;
-    font-size: 17px;
-    color: var(--text-secondary);
+    font-size: 18px;
+    color: var(--text-primary);
     flex: 1;
-    text-align: right;
-    letter-spacing: 0.02em;
-    font-style: italic;
-}
-.view-title:not(:empty)::before {
-    content: '·';
-    color: var(--accent);
-    margin-right: 8px;
-    font-style: normal;
+    letter-spacing: 0.01em;
 }
 .back-btn {
     width: 40px;
@@ -191,87 +120,19 @@ input, select, textarea {
 }
 .back-btn:hover { color: var(--text-primary); background: var(--bg-secondary); }
 
-/* Noren-style asymmetric divider beneath top bar — short hanging fabric panels */
-.noren {
-    height: 14px;
-    max-width: 720px;
-    margin: 0 auto;
-    position: relative;
-    display: flex;
-    gap: 3px;
-    padding: 0 var(--space-4);
-    overflow: hidden;
-}
-.noren span {
-    display: block;
-    flex: 1;
-    background: linear-gradient(180deg, var(--accent) 0%, var(--accent) 30%, transparent 80%);
-    opacity: 0.35;
-    border-radius: 0 0 2px 2px;
-}
-.noren span:nth-child(odd)  { opacity: 0.18; height: 60%; }
-.noren span:nth-child(3n)   { opacity: 0.42; height: 100%; }
-.noren span:nth-child(5n)   { opacity: 0.25; height: 80%; }
-
 /* ----------- Main view container ----------- */
 .view {
     position: relative;
     z-index: 1;
     max-width: 720px;
     margin: 0 auto;
-    padding: var(--space-5) var(--space-4) calc(var(--bottomnav-h) + var(--space-7));
+    padding: var(--space-5) var(--space-4) var(--space-7);
     animation: viewFade var(--motion);
 }
 @keyframes viewFade {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-
-/* ----------- Bottom nav ----------- */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 30;
-    height: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0));
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-around;
-}
-.bottom-nav a {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    color: var(--text-hint);
-    transition: color var(--motion);
-    min-height: var(--bottomnav-h);
-}
-.bottom-nav a {
-    position: relative;
-}
-.bottom-nav a.active { color: var(--accent); }
-.bottom-nav a.active::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 18px;
-    height: 4px;
-    background: var(--accent);
-    border-radius: 0 0 6px 6px;
-    opacity: 0.55;
-}
-.bottom-nav a:hover { color: var(--text-secondary); }
-.bottom-nav a.active:hover { color: var(--accent-hover); }
-.nav-icon { font-size: 20px; line-height: 1; }
-.nav-label { font-size: 11px; letter-spacing: 0.05em; text-transform: lowercase; }
 
 /* ----------- Typography ----------- */
 h1, h2, h3 {
@@ -319,20 +180,10 @@ h3 { font-size: 19px; }
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: var(--space-4);
-    box-shadow: 0 1px 0 var(--shadow), 0 6px 18px -12px var(--shadow);
+    box-shadow: 0 1px 0 var(--shadow), 0 6px 18px -14px var(--shadow);
     position: relative;
-    transition: box-shadow var(--motion), transform var(--motion);
 }
 .card + .card { margin-top: var(--space-3); }
-.card::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: 14px; right: 14px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent);
-    opacity: 0.18;
-    border-radius: 2px;
-}
 
 .list { list-style: none; padding: 0; margin: 0; }
 .list-item {
@@ -371,7 +222,7 @@ h3 { font-size: 19px; }
 
 .btn-primary {
     background: var(--accent);
-    color: #fff;
+    color: #17130D;
     border-color: var(--accent);
 }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -380,7 +231,7 @@ h3 { font-size: 19px; }
 .btn-ghost:hover { background: var(--bg-secondary); border-color: var(--bg-secondary); color: var(--text-primary); }
 
 .btn-danger { color: var(--danger); border-color: transparent; background: transparent; }
-.btn-danger:hover { background: rgba(192, 97, 74, 0.08); }
+.btn-danger:hover { background: rgba(192, 97, 74, 0.1); }
 
 .btn-block { width: 100%; }
 .btn-sm { min-height: 36px; padding: 0 var(--space-3); font-size: 14px; }
@@ -400,7 +251,7 @@ h3 { font-size: 19px; }
     height: var(--tap);
     padding: 0 var(--space-3);
     font-size: 16px;
-    background: var(--bg-card);
+    background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-primary);
@@ -409,7 +260,6 @@ h3 { font-size: 19px; }
 .input:focus, .select:focus {
     outline: none;
     border-color: var(--accent);
-    background: var(--bg-card);
 }
 .input[type=number] {
     text-align: center;
@@ -422,7 +272,7 @@ h3 { font-size: 19px; }
 .row > * { min-width: 0; }
 .row .grow { flex: 1; }
 
-/* ----------- Workout view (the heart of the app) ----------- */
+/* ----------- Workout view ----------- */
 .workout-exercise {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -439,8 +289,8 @@ h3 { font-size: 19px; }
     left: -1px;
     bottom: var(--space-4);
     width: 3px;
-    background: var(--accent);
-    opacity: 0.4;
+    background: var(--accent-workout);
+    opacity: 0.6;
     border-radius: 0 2px 2px 0;
 }
 .workout-exercise h3 {
@@ -476,7 +326,7 @@ h3 { font-size: 19px; }
     text-align: center;
 }
 .set-row.completed .set-input { color: var(--text-hint); text-decoration: line-through; }
-.set-row.completed { background: linear-gradient(0deg, rgba(107, 158, 107, 0.06), rgba(107, 158, 107, 0.06)); border-radius: var(--radius-sm); }
+.set-row.completed { background: linear-gradient(0deg, rgba(125, 170, 122, 0.08), rgba(125, 170, 122, 0.08)); border-radius: var(--radius-sm); }
 
 .set-num {
     font-family: 'DM Serif Display', serif;
@@ -496,7 +346,7 @@ h3 { font-size: 19px; }
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
 }
-.set-input:focus { outline: none; border-color: var(--accent); }
+.set-input:focus { outline: none; border-color: var(--accent-workout); }
 
 .check-btn {
     width: 44px;
@@ -512,19 +362,19 @@ h3 { font-size: 19px; }
     align-items: center;
     justify-content: center;
 }
-.check-btn:hover { border-color: var(--accent); color: var(--accent); }
+.check-btn:hover { border-color: var(--accent-workout); color: var(--accent-workout); }
 .check-btn.checked {
     background: var(--success);
     border-color: var(--success);
-    color: #fff;
-    box-shadow: 0 0 0 4px rgba(107, 158, 107, 0.14), inset 0 0 0 1.5px rgba(255,255,255,0.25);
+    color: #14110D;
+    box-shadow: 0 0 0 4px rgba(125, 170, 122, 0.16);
     transform: rotate(-6deg) scale(1.04);
     font-weight: 700;
 }
 .check-btn.checked:hover {
     background: var(--success);
     border-color: var(--success);
-    color: #fff;
+    color: #14110D;
 }
 .del-set-btn {
     width: 36px;
@@ -532,7 +382,7 @@ h3 { font-size: 19px; }
     color: var(--text-hint);
     border-radius: 50%;
 }
-.del-set-btn:hover { color: var(--danger); background: rgba(192, 97, 74, 0.08); }
+.del-set-btn:hover { color: var(--danger); background: rgba(192, 97, 74, 0.1); }
 
 .add-set-btn {
     margin-top: var(--space-3);
@@ -544,11 +394,11 @@ h3 { font-size: 19px; }
     font-size: 14px;
     transition: all var(--motion);
 }
-.add-set-btn:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+.add-set-btn:hover { border-color: var(--accent-workout); color: var(--accent-workout); border-style: solid; }
 
 .finish-bar {
     position: fixed;
-    bottom: var(--bottomnav-h);
+    bottom: 0;
     left: 0;
     right: 0;
     z-index: 25;
@@ -591,7 +441,7 @@ h3 { font-size: 19px; }
 /* ----------- Resume banner ----------- */
 .resume-banner {
     background: var(--accent-light);
-    border: 1px solid var(--accent);
+    border: 1px solid var(--accent-workout);
     border-radius: var(--radius);
     padding: var(--space-3) var(--space-4);
     margin-bottom: var(--space-4);
@@ -601,73 +451,107 @@ h3 { font-size: 19px; }
     position: relative;
     overflow: hidden;
 }
-.resume-banner::after {
-    content: '';
-    position: absolute;
-    right: -12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(circle, var(--accent) 30%, transparent 31%);
-    background-size: 16px 16px;
-    opacity: 0.12;
-    pointer-events: none;
-}
-.resume-banner .grow { flex: 1; position: relative; z-index: 1; }
+.resume-banner .grow { position: relative; z-index: 1; }
 .resume-banner .btn { position: relative; z-index: 1; }
 
-/* ----------- Home hero ----------- */
-.hero {
+/* ----------- Home: status strip + tile hub ----------- */
+.status-strip {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+.status-chip {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    text-align: center;
+}
+.status-chip .status-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--text-primary);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+.status-chip .status-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-top: 2px;
+}
+
+.tile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+.tile {
+    --tile-accent: var(--accent);
+    grid-column: span 1;
+    aspect-ratio: 1 / 0.92;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    background: var(--bg-card);
+    border: 1px solid color-mix(in srgb, var(--tile-accent) 35%, var(--border));
+    border-radius: var(--radius-lg);
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
     position: relative;
-    margin: -8px -16px var(--space-5);
-    padding: 8px 16px var(--space-5);
-    overflow: hidden;
+    text-align: left;
+    transition: transform var(--motion), border-color var(--motion), background var(--motion);
 }
-.hero-art {
-    width: 100%;
-    height: 120px;
-    display: block;
-    margin-bottom: var(--space-4);
+.tile::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: inherit;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--tile-accent) 14%, transparent), transparent 55%);
+    pointer-events: none;
 }
-.hero h1 {
-    font-size: 40px;
-    line-height: 1;
-    margin-bottom: 4px;
+.tile:active { transform: scale(0.97); }
+.tile:hover { border-color: var(--tile-accent); }
+.tile-primary {
+    grid-column: 1 / -1;
+    aspect-ratio: auto;
+    min-height: 108px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 }
-.hero .tagline {
-    color: var(--text-secondary);
-    font-size: 14px;
-    letter-spacing: 0.18em;
-    text-transform: lowercase;
-    font-style: italic;
+.tile-primary .tile-icon { margin-bottom: 0; }
+.tile-icon {
+    width: 30px;
+    height: 30px;
+    color: var(--tile-accent);
+    margin-bottom: var(--space-2);
+    position: relative;
+    z-index: 1;
 }
-.hero .tagline::before,
-.hero .tagline::after {
-    content: '〜';
-    color: var(--accent);
-    margin: 0 8px;
-    font-style: normal;
+.tile-icon svg { width: 100%; height: 100%; display: block; }
+.tile-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
 }
-.hero-svg .sky        { fill: var(--bg-secondary); }
-.hero-svg .sea        { fill: var(--accent-light); }
-.hero-svg .sun        { fill: var(--accent); opacity: 0.9; }
-.hero-svg .sun-glow   { fill: var(--accent); opacity: 0.18; }
-.hero-svg .island-far  { fill: var(--text-hint); opacity: 0.32; }
-.hero-svg .island-near { fill: var(--text-hint); opacity: 0.5; }
-.hero-svg .wave        { stroke: var(--accent); stroke-linecap: round; }
-.hero-svg .wave-1      { stroke-width: 1.2; opacity: 0.6; }
-.hero-svg .wave-2      { stroke-width: 1; opacity: 0.38; }
-.hero-svg .wave-3      { stroke-width: 1; opacity: 0.4; stroke: var(--text-hint); }
-.hero-svg .boat-hull   { fill: var(--text-secondary); }
-.hero-svg .boat-sail   { fill: var(--accent); opacity: 0.9; }
-.hero-svg .boat-mast   { stroke: var(--text-secondary); stroke-width: 0.8; }
+.tile-sub {
+    font-size: 12px;
+    color: var(--text-hint);
+    position: relative;
+    z-index: 1;
+}
 
 /* ----------- Plans tree ----------- */
 .tree-plan { margin-bottom: var(--space-4); }
 .tree-day {
     margin-left: var(--space-4);
-    border-left: 1px solid var(--border);
+    border-left: 2px solid color-mix(in srgb, var(--accent-plans) 45%, var(--border));
     padding-left: var(--space-3);
     margin-top: var(--space-2);
 }
@@ -691,6 +575,45 @@ h3 { font-size: 19px; }
 .tree-toggle .caret { color: var(--text-hint); transition: transform var(--motion); }
 .tree-toggle[aria-expanded="true"] .caret { transform: rotate(90deg); }
 
+/* ----------- Range filter row (scopes every chart below it) ----------- */
+.range-row {
+    display: flex;
+    gap: 6px;
+    margin: 0 0 var(--space-5);
+    overflow-x: auto;
+}
+.range-chip {
+    flex: 0 0 auto;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: all var(--motion);
+}
+.range-chip.active {
+    border-color: var(--range-accent, var(--accent));
+    color: var(--text-primary);
+    background: var(--accent-light);
+}
+
+/* ----------- Stat tiles (label / value / delta) ----------- */
+.stat-row {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    flex-wrap: wrap;
+}
+.stat-row .status-chip { flex: 1 1 100px; }
+.stat-delta {
+    font-size: 11px;
+    margin-top: 3px;
+    color: var(--text-hint);
+}
+.stat-delta.good { color: var(--success); }
+.stat-delta.warn { color: var(--accent-workout); }
+
 /* ----------- Charts ----------- */
 .chart-wrap {
     background: var(--bg-card);
@@ -702,46 +625,63 @@ h3 { font-size: 19px; }
 .chart-wrap h3 { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; margin-bottom: var(--space-2); color: var(--text-secondary); letter-spacing: 0.04em; }
 .chart-canvas-wrap { position: relative; height: 240px; }
 
-/* PR badge — like a vermillion hanko (印鑑) seal */
-.pr-badge {
+/* Inline PR pill on top of each progress chart */
+.pr-inline {
     display: inline-flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-3);
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 10px;
     background: var(--accent-light);
-    border: 1px dashed var(--accent);
-    border-radius: var(--radius);
+    border-radius: 999px;
+    font-size: 13px;
     color: var(--text-primary);
-    margin-top: var(--space-4);
-    position: relative;
+    white-space: nowrap;
 }
-.pr-badge::before {
-    content: '記';
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    background: var(--danger);
-    color: #FFF8E0;
-    font-family: 'DM Serif Display', serif;
-    font-size: 18px;
-    display: inline-flex;
-    align-items: center;
+.pr-inline-value { font-family: 'DM Serif Display', serif; font-size: 16px; line-height: 1; }
+.pr-inline-meta  { color: var(--text-secondary); font-size: 12px; }
+
+/* Blood marker range indicator */
+.range-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.range-tag.in-range  { background: rgba(125, 170, 122, 0.16); color: var(--success); }
+.range-tag.out-range { background: rgba(192, 97, 74, 0.16); color: var(--danger); }
+
+/* ----------- Modal overlay ----------- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(10, 8, 6, 0.6);
+    display: flex;
+    align-items: flex-end;
     justify-content: center;
-    transform: rotate(-4deg);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-    flex-shrink: 0;
+    padding: 0;
 }
-.pr-badge .pr-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-hover); display: block; }
-.pr-badge .pr-value { font-family: 'DM Serif Display', serif; font-size: 24px; line-height: 1.1; }
-.pr-badge .pr-meta { font-size: 12px; color: var(--text-secondary); display: block; }
-.pr-badge .pr-text { display: flex; flex-direction: column; }
+.modal-overlay .card {
+    background: var(--bg-elevated);
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+@media (min-width: 560px) {
+    .modal-overlay { align-items: center; padding: var(--space-4); }
+    .modal-overlay .card { border-radius: var(--radius-lg); }
+}
 
 /* ----------- Toasts ----------- */
 .toast-container {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(var(--bottomnav-h) + var(--space-3));
+    bottom: var(--space-4);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -762,7 +702,7 @@ h3 { font-size: 19px; }
     pointer-events: auto;
 }
 .toast.error { background: var(--danger); color: #fff; }
-.toast.success { background: var(--success); color: #fff; }
+.toast.success { background: var(--success); color: #14110D; }
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -846,36 +786,11 @@ h3 { font-size: 19px; }
     font-style: italic;
 }
 
-/* Inline PR mini-pill on top of each progress chart */
-.pr-inline {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 4px 10px;
-    background: var(--accent-light);
-    border-radius: 999px;
-    font-size: 13px;
-    color: var(--text-primary);
-    white-space: nowrap;
-}
-.pr-inline-value { font-family: 'DM Serif Display', serif; font-size: 16px; line-height: 1; }
-.pr-inline-meta  { color: var(--text-secondary); font-size: 12px; }
-
 /* ----------- Phone (small) tweaks ----------- */
 @media (max-width: 480px) {
-    /* Make ornamental things louder so they actually register on a small screen */
-    body::before { opacity: 0.28; }
-
-    .hero-art { height: 96px; }
-    .hero h1 { font-size: 36px; }
-    .hero { margin: 0 -16px var(--space-4); padding-top: var(--space-2); }
-
-    .noren { height: 16px; }
-
     .topbar-inner { padding: 0 var(--space-3); }
-    .view { padding: var(--space-4) var(--space-3) calc(var(--bottomnav-h) + var(--space-7)); }
+    .view { padding: var(--space-4) var(--space-3) var(--space-7); }
 
-    /* Workout view: bigger inputs, friendlier set rows */
     .set-row {
         grid-template-columns: 28px 1fr 1fr 44px 32px;
         gap: 6px;
@@ -884,14 +799,9 @@ h3 { font-size: 19px; }
     .check-btn { width: 44px; height: 44px; }
 
     .workout-exercise h3 { font-size: 19px; }
-
-    .pr-badge { width: 100%; }
-
-    /* Slightly stronger seigaiha pattern visible on phone */
-    body::before { background-size: 32px 16px; }
 }
 
 @media (max-width: 360px) {
-    .nav-label { font-size: 10px; }
-    .hero h1 { font-size: 32px; }
+    .tile-title { font-size: 15px; }
+    .status-chip .status-value { font-size: 20px; }
 }

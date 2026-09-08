@@ -9,13 +9,11 @@ export async function renderHistory(root, focusedSessionId = null) {
         return;
     }
 
-    root.appendChild(el('h2', { style: { marginBottom: '16px' } }, ['History']));
-
     let sessions = [];
     try { sessions = await api.listSessions(50, 0); } catch (err) { reportError(err); return; }
 
     if (!sessions.length) {
-        root.appendChild(emptyState({ title: 'No history yet', hint: 'Finished workouts will be remembered here.' }));
+        root.appendChild(emptyState({ title: 'Brak historii', hint: 'Zakończone treningi pojawią się tutaj.' }));
         return;
     }
 
@@ -27,10 +25,10 @@ export async function renderHistory(root, focusedSessionId = null) {
             onClick: () => { window.location.hash = `#/sessions/${s.id}`; },
         }, [
             el('div', { class: 'grow' }, [
-                el('div', {}, [s.training_day_name || 'Workout', s.plan_name ? el('span', { class: 'hint', style: { marginLeft: '8px' } }, [`· ${s.plan_name}`]) : null]),
+                el('div', {}, [s.training_day_name || 'Trening', s.plan_name ? el('span', { class: 'hint', style: { marginLeft: '8px' } }, [`· ${s.plan_name}`]) : null]),
                 el('div', { class: 'meta' }, [
                     fmtDate(s.date),
-                    s.finished_at ? ` · ${fmtDuration(s.started_at, s.finished_at)}` : ' · in progress',
+                    s.finished_at ? ` · ${fmtDuration(s.started_at, s.finished_at)}` : ' · w trakcie',
                 ]),
             ]),
             el('div', { class: 'hint' }, ['›']),
@@ -48,19 +46,19 @@ async function renderSessionDetail(root, sessionId) {
     root.appendChild(el('div', { class: 'card' }, [
         el('div', { class: 'row' }, [
             el('div', { class: 'grow' }, [
-                el('h2', {}, [session.training_day_name || 'Workout']),
+                el('h2', {}, [session.training_day_name || 'Trening']),
                 session.plan_name ? el('div', { class: 'muted', style: { fontSize: '14px' } }, [session.plan_name]) : null,
             ]),
             el('div', { class: 'hint', style: { textAlign: 'right' } }, [
                 fmtDate(session.date),
                 el('br', {}),
-                session.finished_at ? fmtDuration(session.started_at, session.finished_at) : 'in progress',
+                session.finished_at ? fmtDuration(session.started_at, session.finished_at) : 'w trakcie',
             ]),
         ]),
     ]));
 
     if (!sets.length) {
-        root.appendChild(emptyState({ hint: 'No sets were logged in this session.' }));
+        root.appendChild(emptyState({ hint: 'W tej sesji nie zapisano żadnych serii.' }));
         return;
     }
 
